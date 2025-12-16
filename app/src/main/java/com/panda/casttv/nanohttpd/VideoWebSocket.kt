@@ -3,6 +3,7 @@ package com.panda.casttv.nanohttpd
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.google.gson.Gson
 import com.panda.casttv.MainActivity
 import fi.iki.elonen.NanoWSD
 import kotlinx.coroutines.CoroutineScope
@@ -18,6 +19,8 @@ class VideoWebSocket(
 ) : NanoWSD(host, port) {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var videoServer: VideoServer? = null
+    private var imageServer: ImageServer? = null
 
     companion object {
         private val TAG: String
@@ -82,39 +85,44 @@ class VideoWebSocket(
         }
     }
 
-    fun notifyVideoAction(cmd: CommandCastType) {
+    fun notifyVideoAction(cmd: CommandCastType, uri: Uri = Uri.EMPTY) {
         Log.d(TAG, "notifyNewVideo: ")
-//        val availablePort = MainActivity.findAvailablePort()
-//        val videoServer = VideoServer(context, host, availablePort, uri, "video/*")
-//        videoServer.start()
-//
-//        sockets.forEach { item ->
-//            item.close(WebSocketFrame.CloseCode.NormalClosure, "Cast New", true)
-//        }
-//        if (videoServer.isAlive) {
-//            val message = """
-//            {
-//                "command": "LOAD_MEDIA",
-//                "url": "${videoServer.videoURL}",
-//                "mimeType": "$mimeType"
-//            }
-//        """.trimIndent()
-//
-//            // Broadcast the message to all connected clients
-//
-//            scope.launch {
-//                sockets.forEach { socket ->
-//                    try {
-//                        socket.send(message)
-//                    } catch (e: Exception) {
-//                        Log.w(TAG, "notifyNewVideo: ${e.message}")
-//                        e.printStackTrace()
-//                    }
-//                }
-//            }
-//        } else {
-//            Log.e(TAG, "notifyNewVideo: error")
-//        }
+        if (cmd.action == "CONTROL" && videoServer?.isAlive == true) {
+            val message = Gson().toJson(cmd)
+            scope.launch {
+                sockets.forEach { socket ->
+                    try {
+                        socket.send(message)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "notifyNewVideo: ${e.message}")
+                        e.printStackTrace()
+                    }
+                }
+            }
+        } else {
+            val availablePort = MainActivity.findAvailablePort()
+            videoServer = VideoServer(context, host, availablePort, uri, "video/*").apply {
+                start()
+                if (isAlive) {
+                    val message = Gson().toJson(cmd)
+
+                    // Broadcast the message to all connected clients
+
+                    scope.launch {
+                        sockets.forEach { socket ->
+                            try {
+                                socket.send(message)
+                            } catch (e: Exception) {
+                                Log.w(TAG, "notifyNewVideo: ${e.message}")
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                } else {
+                    Log.e(TAG, "notifyNewVideo: error")
+                }
+            }
+        }
     }
 
     fun notifyNewVideo(uri: Uri, mimeType: String) {
