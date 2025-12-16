@@ -12,13 +12,16 @@ class VideoServiceInit(
     val port: Int,
 ) : NanoHTTPD(host, port) {
 
+    val videoURL: String
+        get() = "http://$host:$port/"
+
     var server: VideoWebSocket? = null
 
     val TAG: String
         get() = this::class.java.simpleName
 
     init {
-        Log.d(TAG, "init: $host:$port")
+        Log.d(TAG, "init: $videoURL")
     }
 
 
