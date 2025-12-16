@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                     contract = ActivityResultContracts.GetContent(),
                 ) { uri: Uri? ->
                     if (uri != null) {
-                        serverInit?.server?.notifyNewVideo(uri, "video/mp4")
+                        serverInit?.server?.notifyNewVideo(uri, "video/*")
 //                        val host = wifiIPAddress
 //                        if (!host.isNullOrEmpty()) {
 //                            videoServer?.stop()
@@ -86,10 +86,11 @@ class MainActivity : AppCompatActivity() {
                     if (uri != null) {
                         val host = wifiIPAddress
                         if (!host.isNullOrEmpty()) {
-                            imageServer?.stop()
-                            imageServer = null
-                            imageServer = VideoServer(this@MainActivity, host, 8080, uri, "image/*")
-                            imageServer?.start()
+                            serverInit?.server?.notifyNewImage(uri, "image/*")
+//                            imageServer?.stop()
+//                            imageServer = null
+//                            imageServer = VideoServer(this@MainActivity, host, 8080, uri, "image/*")
+//                            imageServer?.start()
                         }
                     }
                 }
@@ -98,7 +99,7 @@ class MainActivity : AppCompatActivity() {
                         modifier = Modifier.padding(innerPadding),
                         chromeCastState = chromeCastState,
                         onCastVideo = {
-                            pickVideo.launch("video/mp4")
+                            pickVideo.launch("video/*")
                         },
                         onCastImage = {
                             pickImage.launch("image/*")
@@ -153,7 +154,11 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         chromeCastState.run {
-            mediaRouter.addCallback(mediaRouteSelector, mediaRouterCallback, MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY)
+            mediaRouter.addCallback(
+                mediaRouteSelector,
+                mediaRouterCallback,
+                MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY
+            )
             castSessionManager.addSessionManagerListener(sessionManagerListener)
             castReceiverContext?.start()
         }
@@ -170,13 +175,15 @@ class MainActivity : AppCompatActivity() {
 
     val wifiIPAddress: String?
         get() {
-            val connectivityManager = this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val connectivityManager =
+                this.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             val network = connectivityManager.activeNetwork ?: return null
             val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return null
 
             // Check if connected via Wi-Fi
             if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                val wifiManager = this.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+                val wifiManager =
+                    this.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
                 val wifiInfo = wifiManager.connectionInfo
                 // Deprecated method is used as it's simple for this use case.
                 // For modern approach use NsdManager or WifiP2pManager, but this works for basic IP retrieval

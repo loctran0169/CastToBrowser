@@ -113,4 +113,36 @@ class VideoWebSocket(
             Log.e(TAG, "notifyNewVideo: error")
         }
     }
+
+    fun notifyNewImage(uri: Uri, mimeType: String) {
+        Log.d(TAG, "notifyNewVideo: ")
+        val availablePort = MainActivity.findAvailablePort()
+        val imageServer = ImageServer(context, host, availablePort, uri, mimeType)
+        imageServer.start()
+
+        if (imageServer.isAlive) {
+            val message = """
+            {
+                "command": "LOAD_MEDIA",
+                "url": "${imageServer.videoURL}",
+                "mimeType": "$mimeType"
+            }
+        """.trimIndent()
+
+            // Broadcast the message to all connected clients
+
+            scope.launch {
+                sockets.forEach { socket ->
+                    try {
+                        socket.send(message)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "notifyNewVideo: ${e.message}")
+                        e.printStackTrace()
+                    }
+                }
+            }
+        } else {
+            Log.e(TAG, "notifyNewVideo: error")
+        }
+    }
 }
