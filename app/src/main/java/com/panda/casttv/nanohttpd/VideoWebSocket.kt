@@ -66,7 +66,7 @@ class VideoWebSocket(
 
         override fun onMessage(frame: WebSocketFrame) {
             val message = frame.textPayload
-            Log.d(TAG, "onMessage: ${frame.textPayload}")
+//            Log.d(TAG, "onMessage: ${frame.textPayload}")
             try {
                 send("Server received: $message")
             } catch (e: Exception) {
