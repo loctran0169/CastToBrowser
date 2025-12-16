@@ -49,56 +49,39 @@ class VideoServiceInit(
                 <style>
                     body { 
                         font-family: sans-serif; 
-                        margin: 0; 
-                        padding: 0; 
+                        margin: 0; padding: 0; 
                         background-color: #000; 
                         color: white; 
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
+                        display: flex; flex-direction: column;
+                        align-items: center; justify-content: center;
                         min-height: 100vh;
+                        overflow: hidden;
                     }
                     #status { 
-                        position: absolute; 
-                        top: 10px; 
-                        left: 10px; 
-                        font-size: 12px; 
-                        color: gray; 
-                        z-index: 10;
+                        position: absolute; top: 10px; left: 10px; 
+                        font-size: 12px; color: gray; z-index: 10;
                     }
                     #media-container { 
-                        width: 100%; 
-                        height: 100%; 
-                        display: flex; 
-                        justify-content: center; 
-                        align-items: center; 
+                        width: 100%; height: 100%; 
+                        display: flex; justify-content: center; align-items: center; 
                     }
                     video, img { 
-                        max-width: 100%; 
-                        max-height: 100vh; 
+                        max-width: 100%; max-height: 100vh; 
                         object-fit: contain; 
-                    }
-                    #debug-text {
-                        display: none; /* Change to block to debug JSON */
-                        position: absolute;
-                        bottom: 10px;
-                        color: yellow;
                     }
                 </style>
             </head>
             <body>
                 <div id="status">Disconnected</div>
                 <div id="media-container">
-                    <!-- Media will be injected here -->
-                    <h2 id="placeholder">Waiting for media...</h2>
+                    <h2 id="placeholder">Ready to Cast</h2>
                 </div>
-                <div id="debug-text"></div>
 
                 <script>
                     var ws;
+                    var currentMediaElement = null; // Store reference to current video/img
+
                     function connect() {
-                        // Connect to the WebSocket created in Kotlin
                         ws = new WebSocket("ws://${host}:${server?.port}");
                         
                         ws.onopen = function() {
@@ -108,59 +91,122 @@ class VideoServiceInit(
 
                         ws.onmessage = function(event) {
                             console.log("Received: " + event.data);
-                            // Optional: show raw data for debugging
-                            // document.getElementById("debug-text").innerText = event.data;
-
                             try {
-                                var payload = JSON.parse(event.data);
-                                handleMediaCommand(payload);
+                                var msg = JSON.parse(event.data);
+                                processMessage(msg);
                             } catch (e) {
-                                console.error("Invalid JSON", e);
+                                console.error("JSON Error", e);
                             }           
                         };
 
                         ws.onclose = function() {
                             document.getElementById("status").innerText = "Disconnected";
                             document.getElementById("status").style.color = "red";
-                            // Try to reconnect after 2 seconds
-                             setTimeout(connect, 2000);
+                            setTimeout(connect, 2000);
                         };
                     }
 
-                    function handleMediaCommand(data) {
-                        if (data.command !== "LOAD_MEDIA") return;
+                    function processMessage(data) {
+                        // 1. Handle New Media
+                        if (data.command === "LOAD_MEDIA") {
+                            loadMedia(data);
+                        } 
+                        // 2. Handle Controls (Play/Pause/Seek)
+                        else if (data.command === "CONTROL") {
+                            controlMedia(data);
+                        }
+                    }
 
+                    function loadMedia(data) {
                         var container = document.getElementById("media-container");
-                        container.innerHTML = ""; // Clear current content
+                        
+                        // Clean up existing media events
+                        if (currentMediaElement) {
+                            currentMediaElement.pause && currentMediaElement.pause();
+                            currentMediaElement.src = "";
+                            currentMediaElement = null;
+                        }
+                        container.innerHTML = "";
 
                         if (data.mimeType.startsWith("video")) {
-                            // Create Video Element
                             var video = document.createElement("video");
                             video.src = data.url;
-                            video.controls = true;
+                            video.controls = false; // Hide default controls if you want full remote control
                             video.autoplay = true;
-                            // 'muted' is often required for autoplay to work on modern browsers/Android WebViews
-                            // unless there has been user interaction.
-                            // video.muted = true; 
-                            container.appendChild(video);
                             
-                            var playPromise = video.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(error => {
-                                    console.log("Autoplay prevented, adding muted.");
-                                    video.muted = true;
-                                    video.play();
-                                });
+                            // Attach Event Listeners to send status back to Android
+                            attachVideoListeners(video);
+                            
+                            container.appendChild(video);
+                            currentMediaElement = video;
+                            
+                            var p = video.play();
+                            if (p !== undefined) {
+                                p.catch(e => { video.muted = true; video.play(); });
                             }
 
                         } else if (data.mimeType.startsWith("image")) {
-                            // Create Image Element
                             var img = document.createElement("img");
                             img.src = data.url;
                             container.appendChild(img);
-                        } else {
-                            // Unsupported format
-                            container.innerHTML = "<h2>Unsupported media type: " + data.mimeType + "</h2>";
+                            currentMediaElement = img;
+                        }
+                    }
+
+                    function controlMedia(data) {
+                        if (!currentMediaElement || currentMediaElement.tagName !== "VIDEO") return;
+
+                        switch (data.action) {
+                            case "PLAY":
+                                currentMediaElement.play();
+                                break;
+                            case "PAUSE":
+                                currentMediaElement.pause();
+                                break;
+                            case "SEEK":
+                                // Expecting data.position in seconds
+                                if (data.position !== undefined) {
+                                    currentMediaElement.currentTime = data.position;
+                                }
+                                break;
+                        }
+                    }
+
+                    function attachVideoListeners(video) {
+                        // Notify Android when video starts playing
+                        video.onplay = function() {
+                            sendToAndroid({ event: "STATE_CHANGED", state: "PLAYING" });
+                        };
+
+                        // Notify Android when video is paused
+                        video.onpause = function() {
+                            sendToAndroid({ event: "STATE_CHANGED", state: "PAUSED" });
+                        };
+
+                        // Notify Android about progress (every ~250ms)
+                        // Useful for updating Seekbar on Android
+                        var lastUpdate = 0;
+                        video.ontimeupdate = function() {
+                            var now = Date.now();
+                            if (now - lastUpdate > 500) { // Limit updates to 2x per second
+                                sendToAndroid({ 
+                                    event: "PROGRESS", 
+                                    currentTime: video.currentTime, 
+                                    duration: video.duration 
+                                });
+                                lastUpdate = now;
+                            }
+                        };
+
+                        // Notify when video ends
+                        video.onended = function() {
+                            sendToAndroid({ event: "STATE_CHANGED", state: "ENDED" });
+                        };
+                    }
+
+                    function sendToAndroid(jsonObj) {
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify(jsonObj));
                         }
                     }
 

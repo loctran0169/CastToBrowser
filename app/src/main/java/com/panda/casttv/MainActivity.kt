@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.mediarouter.app.MediaRouteButton
@@ -81,7 +84,6 @@ class MainActivity : AppCompatActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Greeting(
                         modifier = Modifier.padding(innerPadding),
-                        chromeCastState = chromeCastState,
                         onCastVideo = {
                             pickVideo.launch("video/*")
                         },
@@ -99,7 +101,8 @@ class MainActivity : AppCompatActivity() {
     fun startServerInit() {
         val host = wifiIPAddress
         if (!host.isNullOrEmpty()) {
-            val port = findAvailablePort()
+//            val port = findAvailablePort()
+            val port = 8435
             serverInit = VideoServiceInit(this, host, port)
             try {
                 serverInit?.start()
@@ -173,12 +176,16 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
+@Preview
 @Composable
 fun Greeting(
     modifier: Modifier = Modifier,
-    chromeCastState: ChromeCastState,
-    onCastVideo: () -> Unit,
-    onCastImage: () -> Unit,
+    onCastVideo: () -> Unit = {},
+    onCastImage: () -> Unit = {},
+    onPrev10s: () -> Unit = {},
+    onNext10s: () -> Unit = {},
+    onPlay: () -> Unit = {},
+    onPause: () -> Unit = {},
 ) {
     val context = LocalContext.current
     Column(
@@ -204,15 +211,7 @@ fun Greeting(
                     .size(25.dp)
             )
         }
-        chromeCastState.items.forEach { device ->
-            Row(Modifier.fillMaxWidth()) {
-                Text(
-                    device.name,
-                    color = Color.Black,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -240,6 +239,65 @@ fun Greeting(
                     .background(Color.Blue)
                     .clickable {
                         onCastVideo()
+                    }
+                    .padding(vertical = 12.dp)
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                "prev 10s",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Blue)
+                    .clickable {
+                        onPrev10s()
+                    }
+                    .padding(vertical = 12.dp)
+            )
+
+            Text(
+                "play",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Blue)
+                    .clickable {
+                        onPlay()
+                    }
+                    .padding(vertical = 12.dp)
+            )
+
+            Text(
+                "pause",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Blue)
+                    .clickable {
+                        onPause()
+                    }
+                    .padding(vertical = 12.dp)
+            )
+
+            Text(
+                "next 10s",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .background(Color.Blue)
+                    .clickable {
+                        onNext10s()
                     }
                     .padding(vertical = 12.dp)
             )

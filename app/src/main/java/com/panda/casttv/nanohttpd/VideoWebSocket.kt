@@ -82,8 +82,44 @@ class VideoWebSocket(
         }
     }
 
+    fun notifyVideoAction(cmd: CommandCastType) {
+        Log.d(TAG, "notifyNewVideo: ")
+//        val availablePort = MainActivity.findAvailablePort()
+//        val videoServer = VideoServer(context, host, availablePort, uri, "video/*")
+//        videoServer.start()
+//
+//        sockets.forEach { item ->
+//            item.close(WebSocketFrame.CloseCode.NormalClosure, "Cast New", true)
+//        }
+//        if (videoServer.isAlive) {
+//            val message = """
+//            {
+//                "command": "LOAD_MEDIA",
+//                "url": "${videoServer.videoURL}",
+//                "mimeType": "$mimeType"
+//            }
+//        """.trimIndent()
+//
+//            // Broadcast the message to all connected clients
+//
+//            scope.launch {
+//                sockets.forEach { socket ->
+//                    try {
+//                        socket.send(message)
+//                    } catch (e: Exception) {
+//                        Log.w(TAG, "notifyNewVideo: ${e.message}")
+//                        e.printStackTrace()
+//                    }
+//                }
+//            }
+//        } else {
+//            Log.e(TAG, "notifyNewVideo: error")
+//        }
+    }
+
     fun notifyNewVideo(uri: Uri, mimeType: String) {
         Log.d(TAG, "notifyNewVideo: ")
+
         val availablePort = MainActivity.findAvailablePort()
         val videoServer = VideoServer(context, host, availablePort, uri, "video/*")
         videoServer.start()
@@ -115,7 +151,7 @@ class VideoWebSocket(
     }
 
     fun notifyNewImage(uri: Uri, mimeType: String) {
-        Log.d(TAG, "notifyNewVideo: ")
+        Log.d(TAG, "notifyNewImage: ")
         val availablePort = MainActivity.findAvailablePort()
         val imageServer = ImageServer(context, host, availablePort, uri, mimeType)
         imageServer.start()
