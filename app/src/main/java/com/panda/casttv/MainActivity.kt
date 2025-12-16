@@ -45,10 +45,7 @@ class MainActivity : AppCompatActivity() {
 
     private val TAGS = "nanohttpd"
 
-    private var server: VideoWebSocket? = null
-    private var videoServer: VideoServer? = null
     private var serverInit: VideoServiceInit? = null
-    private var imageServer: VideoServer? = null
 
     private lateinit var chromeCastState: ChromeCastState
 
@@ -67,15 +64,6 @@ class MainActivity : AppCompatActivity() {
                 ) { uri: Uri? ->
                     if (uri != null) {
                         serverInit?.server?.notifyNewVideo(uri, "video/*")
-//                        val host = wifiIPAddress
-//                        if (!host.isNullOrEmpty()) {
-//                            videoServer?.stop()
-//                            videoServer = null
-//                            val port = findAvailablePort()
-//                            Log.d(TAGS, "onCreate: port $port")
-//                            videoServer = VideoServer(this@MainActivity, host, port, uri, "video/*")
-//                            videoServer?.start()
-//                            server?.notifyNewVideo(uri, "video/*")
 //                        }
                     }
                 }
@@ -87,10 +75,6 @@ class MainActivity : AppCompatActivity() {
                         val host = wifiIPAddress
                         if (!host.isNullOrEmpty()) {
                             serverInit?.server?.notifyNewImage(uri, "image/*")
-//                            imageServer?.stop()
-//                            imageServer = null
-//                            imageServer = VideoServer(this@MainActivity, host, 8080, uri, "image/*")
-//                            imageServer?.start()
                         }
                     }
                 }
@@ -109,8 +93,6 @@ class MainActivity : AppCompatActivity() {
             }
 
         }
-
-//        startServerSocket()
         startServerInit()
     }
 
@@ -126,25 +108,6 @@ class MainActivity : AppCompatActivity() {
                 e.printStackTrace()
             }
         }
-    }
-
-    fun startServerSocket() {
-        val host = wifiIPAddress
-        if (!host.isNullOrEmpty()) {
-            val port = findAvailablePort()
-            server = VideoWebSocket(this, host, port)
-            try {
-                server?.start(NanoHTTPD.SOCKET_READ_TIMEOUT, false)
-                Log.d(TAGS, "startServerSocket: $port")
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    fun stopServerSocket() {
-        server?.stop()
-        println("Server stopped")
     }
 
     override fun onDestroy() {

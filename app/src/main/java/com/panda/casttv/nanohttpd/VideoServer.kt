@@ -48,7 +48,7 @@ class VideoServer(
     fun responseVideoStream(): Response {
         try {
             val fis = context.contentResolver.openInputStream(uri)
-            return newChunkedResponse(Response.Status.OK, "video/mp4", fis)
+            return newChunkedResponse(Response.Status.OK, mimeType, fis)
         } catch (e: FileNotFoundException) {
             throw RuntimeException(e)
         }
