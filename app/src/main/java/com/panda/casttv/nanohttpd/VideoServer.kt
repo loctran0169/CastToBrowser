@@ -70,7 +70,6 @@ class VideoServer(
 
     @Throws(IOException::class)
     private fun getPartialResponse(mimeType: String?, rangeHeader: String): Response {
-        Log.d(TAG, "getPartialResponse: ")
         val fileLength = context.getFileLengthFromUri(uri)
         val rangeValue = rangeHeader.trim { it <= ' ' }.substring("bytes=".length)
         val start: Long
@@ -89,6 +88,8 @@ class VideoServer(
             end = fileLength - 1
         }
         if (start <= end) {
+            Log.d(TAG, "getPartialResponse: ${end/fileLength}%")
+
             val contentLength = end - start + 1
             val fileInputStream =
                 context.contentResolver.openInputStream(uri)

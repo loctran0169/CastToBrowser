@@ -134,27 +134,27 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    override fun onResume() {
-        super.onResume()
-        chromeCastState.run {
-            mediaRouter.addCallback(
-                mediaRouteSelector,
-                mediaRouterCallback,
-                MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY
-            )
-            castSessionManager.addSessionManagerListener(sessionManagerListener)
-            castReceiverContext?.start()
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        chromeCastState.run {
-            mediaRouter.removeCallback(mediaRouterCallback)
-            castSessionManager.removeSessionManagerListener(sessionManagerListener)
-            castReceiverContext?.stop()
-        }
-    }
+//    override fun onResume() {
+//        super.onResume()
+//        chromeCastState.run {
+//            mediaRouter.addCallback(
+//                mediaRouteSelector,
+//                mediaRouterCallback,
+//                MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY
+//            )
+//            castSessionManager.addSessionManagerListener(sessionManagerListener)
+//            castReceiverContext?.start()
+//        }
+//    }
+//
+//    override fun onPause() {
+//        super.onPause()
+//        chromeCastState.run {
+//            mediaRouter.removeCallback(mediaRouterCallback)
+//            castSessionManager.removeSessionManagerListener(sessionManagerListener)
+//            castReceiverContext?.stop()
+//        }
+//    }
 
     val wifiIPAddress: String?
         get() {
