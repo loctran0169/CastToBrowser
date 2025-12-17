@@ -190,6 +190,28 @@ class MainActivity : AppCompatActivity() {
                 8080
             }
         }
+
+        fun checkIfVideoIsHevc(context: Context, uri: Uri): Boolean {
+            val extractor = android.media.MediaExtractor()
+            try {
+                extractor.setDataSource(context, uri, null)
+                for (i in 0 until extractor.trackCount) {
+                    val format = extractor.getTrackFormat(i)
+                    val mime = format.getString(android.media.MediaFormat.KEY_MIME)
+                    if (mime?.startsWith("video/") == true) {
+                        // Check for HEVC mime types
+                        if (mime.contains("hevc") || mime.contains("hvc")) {
+                            return true
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                extractor.release()
+            }
+            return false
+        }
     }
 }
 
