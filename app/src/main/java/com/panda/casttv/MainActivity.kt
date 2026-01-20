@@ -35,15 +35,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.mediarouter.app.MediaRouteButton
-import androidx.mediarouter.media.MediaRouter
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.panda.casttv.chrome_cast.state.ChromeCastState
 import com.panda.casttv.nanohttpd.CommandCastType
-import com.panda.casttv.nanohttpd.VideoServer
 import com.panda.casttv.nanohttpd.VideoServiceInit
-import com.panda.casttv.nanohttpd.VideoWebSocket
 import com.panda.casttv.ui.theme.CastTVResearchTheme
-import fi.iki.elonen.NanoHTTPD
 
 class MainActivity : AppCompatActivity() {
 
